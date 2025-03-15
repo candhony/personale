@@ -1,28 +1,26 @@
 const nodemailer = require('nodemailer');
 
-module.exports = async (req, res) => {
-  const transporter = nodemailer.createTransport({
-    host: 'mail.candeloroanthony.it', // Sostituisci con il tuo server SMTP
-    port: 465, // Porta sicura SSL
-    secure: true,
-    auth: {
-      user: process.env.EMAIL, //
-      pass: process.env.EMAIL_PASSWORD //
-    },
-    tls: {
-      rejectUnauthorized: false // Solo per testing, rimuovi in produzione
+export default async function handler(req, res) {
+    const transporter = nodemailer.createTransport({
+        host: 'mail.candeloroanthony.it', // SMTP del tuo hosting
+        port: 465,
+        secure: true,
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.EMAIL_PASSWORD
+        }
+    });
+
+    try {
+        await transporter.sendMail({
+            from: `"Cyber Contact" <${process.env.EMAIL}>`,
+            to: process.env.EMAIL,
+            subject: `New Message: ${req.body.subject}`,
+            text: req.body.message,
+            html: `<pre style="font-family: 'JetBrains Mono',monospace;color:#4AF626;background:#001100;padding:20px;border:2px solid #4AF626">${req.body.message}</pre>`
+        });
+        res.status(200).json({ status: 'success' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-  });
-
-  const { subject, message } = req.body;
-
-  await transporter.sendMail({
-    from: '"CyberSite" <noreppo@candeloroanthony.it>',
-    to: process.env.EMAIL,
-    subject: `[CYBER ALERT] ${subject}`,
-    text: message,
-    html: `<pre style="color:#4AF626;background:#001100;padding:20px;border:2px solid #4AF626">${message}</pre>`
-  });
-
-  res.status(200).json({ status: 'quantum_encrypted' });
-};
+}
